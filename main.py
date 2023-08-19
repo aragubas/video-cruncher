@@ -3,6 +3,8 @@ from pathlib import Path
 
 threads = 4
 last_output_dir = ""
+HEADER_ERROR = "\033[91mE: \033[0m"
+HEADER_ARROW = "\033[92m-> \033[0m"
 
 
 def build_command(input_file: str, output_dir: str, i: int) -> str:
@@ -23,10 +25,10 @@ def main():
     last_output_dir = output_dir
 
     if not os.path.isfile(input_file):
-        print("E: Could not find input file")
+        print(f"{{HEADER_ERROR}}Could not find input file")
         exit(1)
 
-    print(f"->Path: {os.path.abspath(input_file)}")
+    print(f"{HEADER_ARROW}Path: {os.path.abspath(input_file)}")
 
     iterations = input("Compression Iterations: ")
 
@@ -34,7 +36,7 @@ def main():
         iterations = int(iterations)
 
     except ValueError:
-        print("E: Invalid Iterations")
+        print(f"{{HEADER_ERROR}}Invalid Iterations")
         exit(1)
 
     # Create temporary directory
@@ -53,15 +55,20 @@ def main():
     # Delete temporary files
     shutil.rmtree(output_dir)
 
-    print(f"-> {Path.absolute(Path(final_filename))}")
+    print(f"{HEADER_ARROW}{Path.absolute(Path(final_filename))}")
 
 
 if __name__ == "__main__":
+    # Check if ffmpeg is present
+    if shutil.which("ffmpeg") == None:
+        print(f"{HEADER_ERROR}Could not find 'ffmpeg' in path")
+        exit(1)
+
     try:
         main()
 
     except KeyboardInterrupt:
-        print("\nE: Operation aborted")
+        print("\n{HEADER_ERROR}Operation aborted")
 
         # Removes last output dir when aborting
         if os.path.exists(last_output_dir):
