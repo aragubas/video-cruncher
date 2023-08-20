@@ -7,13 +7,26 @@ HEADER_ERROR = "\033[91mE: \033[0m"
 HEADER_ARROW = "\033[92m-> \033[0m"
 
 
-def build_command(input_file: str, output_dir: str, i: int) -> str:
+def build_command(
+    input_file: str, output_dir: str, i: int, compression_level: int = 0
+) -> str:
     global threads
 
-    if i == 0:
-        return f'-i "{input_file}" -c:a aac -c:v h264 -b:v 32k -b:a 8k -ar 8000 "{os.path.join(output_dir, "crunch0.mp4")}" -y -threads {threads}'
+    compression_string = "-b:v 64k -b:a 12k -ar 8000"
+
+    if compression_level == 1:
+        compression_string = "-b:v 16k -b:a 8k -ar 8000"
+
+    elif compression_level == 2:
+        compression_string = "-b:v 32k -b:a 8k -ar 32000"
+
     else:
-        return f"-i \"{os.path.join(output_dir, f'crunch{i - 1}.mp4')}\" -c:a aac -c:v h264 -b:v 32k -b:a 8k -ar 8000 \"{os.path.join(output_dir, f'crunch{i}.mp4')}\" -y -threads {threads}"
+        compression_string = "-b:v 64k -b:a 12k -ar 44100"
+
+    if i == 0:
+        return f'-i "{input_file}" -c:a aac -c:v h264 {compression_string} "{os.path.join(output_dir, "crunch0.mp4")}" -y -threads {threads}'
+    else:
+        return f"-i \"{os.path.join(output_dir, f'crunch{i - 1}.mp4')}\" -c:a aac -c:v h264 {compression_string} \"{os.path.join(output_dir, f'crunch{i}.mp4')}\" -y -threads {threads}"
 
 
 def main():
@@ -37,6 +50,27 @@ def main():
 
     except ValueError:
         print(f"{{HEADER_ERROR}}Invalid Iterations")
+        exit(1)
+
+    compression_level = input(
+        "Compression Level [0=default(medium), 1=extreme, 2=medium, 3=slight]: "
+    )
+
+    try:
+        if compression_level != "":
+            compression_level = int(compression_level)
+
+        else:
+            compression_level = 2
+
+        if compression_level == 0:
+            compression_level = 2
+
+        if compression_level >= 4 or compression_level < 0:
+            raise ValueError()
+
+    except ValueError:
+        print(f"{HEADER_ERROR}Invalid compression level")
         exit(1)
 
     # Create temporary directory
